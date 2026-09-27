@@ -44,6 +44,7 @@ var minimalOpensearchServerlessVersion = "2.0.0"
 
 type ProviderConf struct {
 	rawUrl                   string
+	dashboardsURL            string
 	insecure                 bool
 	sniffing                 bool
 	healthchecking           bool
@@ -86,6 +87,12 @@ func Provider() *schema.Provider {
 				Required:    true,
 				DefaultFunc: schema.EnvDefaultFunc("OPENSEARCH_URL", nil),
 				Description: "OpenSearch URL",
+			},
+			"dashboards_url": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				DefaultFunc: schema.EnvDefaultFunc("OPENSEARCH_DASHBOARDS_URL", nil),
+				Description: "OpenSearch Dashboards base URL (e.g. http://host:5601). Required only by the opensearch_saved_objects_import resource, which speaks the OSD saved-objects API rather than the OpenSearch node API.",
 			},
 			"sniff": {
 				Type:        schema.TypeBool,
@@ -293,6 +300,7 @@ func providerConfigure(c context.Context, d *schema.ResourceData) (interface{}, 
 
 	conf := &ProviderConf{
 		rawUrl:             rawUrl,
+		dashboardsURL:      d.Get("dashboards_url").(string),
 		insecure:           d.Get("insecure").(bool),
 		sniffing:           d.Get("sniff").(bool),
 		healthchecking:     d.Get("healthcheck").(bool),
