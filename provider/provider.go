@@ -265,6 +265,7 @@ func Provider() *schema.Provider {
 			"opensearch_index":                     resourceOpensearchIndex(),
 			"opensearch_ingest_pipeline":           resourceOpensearchIngestPipeline(),
 			"opensearch_dashboard_object":          resourceOpensearchDashboardObject(),
+			"opensearch_saved_objects_import":      resourceOpensearchSavedObjectsImport(),
 			"opensearch_audit_config":              resourceOpenSearchAuditConfig(),
 			"opensearch_ism_policy_mapping":        resourceOpenSearchISMPolicyMapping(),
 			"opensearch_ism_policy":                resourceOpenSearchISMPolicy(),
