@@ -173,7 +173,11 @@ func resourceOpensearchGetISMPolicy(policyID string, m interface{}) (GetPolicyRe
 	})
 
 	if err != nil {
-		return *response, fmt.Errorf("error getting policy: %+v : %+v", path, err)
+		// Return the raw err so its *elastic.Error type survives. IsNotFound ->
+		// IsStatusCode does a bare type switch and never unwraps, so neither %+v
+		// (drops the type) nor %w (type present but not unwrapped) would work.
+		log.Printf("[INFO] error getting policy at %s: %+v", path, err)
+		return *response, err
 	}
 	body = &res.Body
 
@@ -196,6 +200,17 @@ func resourceOpensearchPutISMPolicy(d *schema.ResourceData, m interface{}) (*Put
 	seq := d.Get("seq_no").(int)
 	primTerm := d.Get("primary_term").(int)
 	params := url.Values{}
+
+	// Re-read the live seq_no/primary_term right before the PUT. The value in
+	// state can lag reality (ISM writes its own policy metadata after our
+	// create/read), and the built-in 409 retrier below replays the stale value,
+	// so it never converges. Guarding against the current version fixes that.
+	if seq >= 0 && primTerm > 0 {
+		if cur, gerr := resourceOpensearchGetISMPolicy(d.Get("policy_id").(string), m); gerr == nil {
+			seq = cur.SeqNo
+			primTerm = cur.PrimaryTerm
+		}
+	}
 
 	if seq >= 0 && primTerm > 0 {
 		params.Set("if_seq_no", strconv.Itoa(seq))
